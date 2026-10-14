@@ -31,10 +31,9 @@ import {
   PronunciationLab,
   QuestionSet,
   SpeakingRecorder,
-  VisualVocabulary,
-  WordPractice,
 } from "./components/Activities";
 import YouTubeLab from "./components/YouTubeLab";
+import VocabularyJourney from "./components/VocabularyJourney";
 import {
   YouTubeMicroLesson,
   YouTubeSpeakingModel,
@@ -315,12 +314,7 @@ function Lesson({
           title="Build your word power"
           text="Match each useful phrase with its Kazakh meaning, then use two phrases in a sentence."
         />
-        <WordPractice words={vocabulary} kk={kk} />
-        <VisualVocabulary words={vocabulary} kk={kk} />
-        <Prompt
-          question="I moved to a new neighbourhood, so I had to…"
-          hint="Use: settle in / get to know"
-        />
+        <VocabularyJourney words={vocabulary} kk={kk} />
         <Complete done={done} onClick={onComplete} />
       </>
     );

@@ -77,10 +77,10 @@ export const lessons: Lesson[] = [
 export const vocabulary = [
   ["settle in", "жаңа ортаға үйрену"],
   ["get to know", "танысып-білу"],
-  ["keep in touch", "байланыста болу"],
-  ["take up", "жаңа іспен айналыса бастау"],
+  ["sign up", "тіркелу"],
+  ["give something a try", "бір нәрсені байқап көру"],
   ["turning point", "бетбұрыс"],
-  ["out of my comfort zone", "үйреншікті жайлылықтан тыс"],
+  ["step outside your comfort zone", "үйреншікті ортадан шығу"],
 ];
 
 export type Question = {
