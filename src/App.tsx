@@ -23,13 +23,11 @@ import {
   grammarQuestions,
   lessons,
   listeningQuestions,
-  listeningTranscript,
   readingQuestions,
   reviewQuestions,
   vocabulary,
 } from "./course";
 import {
-  ListeningPlayer,
   PronunciationLab,
   QuestionSet,
   SentenceBuilder,
@@ -38,6 +36,7 @@ import {
   VisualVocabulary,
   WordPractice,
 } from "./components/Activities";
+import YouTubeLab from "./components/YouTubeLab";
 import AuthPage from "./AuthPage";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import {
@@ -380,10 +379,10 @@ function Lesson({
     return (
       <>
         <Intro
-          title="A voice from Almaty"
-          text="Listen for the main idea, then for details."
+          title="A 30-day experiment"
+          text="Watch once for the main idea, then use the timestamped clips for detailed listening and shadowing."
         />
-        <ListeningPlayer transcript={listeningTranscript} />
+        <YouTubeLab kk={kk} />
         <QuestionSet
           title="LISTENING CHECK"
           questions={listeningQuestions}

@@ -181,33 +181,52 @@ export const listeningTranscript = `When I arrived at the design studio in Almat
 
 export const listeningQuestions: Question[] = [
   {
-    question: "How did Timur feel by the end of the day?",
-    options: ["More confident", "Still disappointed", "Ready to leave the job"],
-    correct: 0,
-    explanation: "He was still nervous, but he no longer felt alone.",
-    kk: "Ол әлі қобалжыды, бірақ өзін жалғыз сезінбеді.",
-  },
-  {
-    question: "What happened when Timur arrived?",
+    question: "What is Matt’s main message?",
     options: [
-      "He forgot his laptop.",
-      "He dropped his notebook.",
-      "He missed a meeting.",
+      "Change your whole life in one day.",
+      "Try one meaningful change consistently for 30 days.",
+      "Avoid difficult challenges.",
     ],
     correct: 1,
-    explanation: "His papers went everywhere when he dropped the notebook.",
-    kk: "Дәптерін түсіріп алып, қағаздары шашылып қалды.",
+    explanation:
+      "He argues that 30 days is long enough to experiment with a new habit and notice change.",
+    kk: "Оның ойынша, жаңа әдетті байқап көруге және өзгерісті сезуге 30 күн жеткілікті.",
   },
   {
-    question: "What lesson did he learn?",
+    question: "Which daily challenge made the month more memorable?",
     options: [
-      "Never carry paper.",
-      "Lunch is the best time to work.",
-      "Asking for help can build connection.",
+      "Taking one photograph",
+      "Cycling up a mountain",
+      "Giving up all technology",
     ],
-    correct: 2,
-    explanation: "A small moment of help made him feel part of the team.",
-    kk: "Көмек сұрау оны командаға жақындатты.",
+    correct: 0,
+    explanation:
+      "He took a picture every day and could remember where he was and what he was doing.",
+    kk: "Ол күн сайын суретке түсіріп, сол күндері қайда және не істеп жүргенін есте сақтады.",
+  },
+  {
+    question: "What happened as his challenges became harder?",
+    options: [
+      "He became less interested.",
+      "His self-confidence grew.",
+      "He stopped after one month.",
+    ],
+    correct: 1,
+    explanation:
+      "Harder challenges helped him become more confident and adventurous.",
+    kk: "Күрделірек сынақтар оның сенімін арттырып, батылырақ болуына көмектесті.",
+  },
+  {
+    question: "Which changes were more likely to ‘stick’ ?",
+    options: [
+      "Small sustainable changes",
+      "Big crazy challenges",
+      "Changes suggested by other people",
+    ],
+    correct: 0,
+    explanation:
+      "Realistic changes he could continue were more likely to become lasting habits.",
+    kk: "Жалғастыруға болатын шағын, тұрақты өзгерістер әдетке айналуы ықтимал болды.",
   },
 ];
 
