@@ -519,6 +519,167 @@ export function VisualVocabulary({
   );
 }
 
+const pronunciationItems = [
+  {
+    word: "worked",
+    sound: "/t/",
+    model: "I worked in Astana last year.",
+    tip: "The final sound is short and unvoiced. Do not add another syllable.",
+    kk: "Соңғы дыбыс қысқа, дауыссыз айтылады. Қосымша буын қоспаңыз.",
+  },
+  {
+    word: "moved",
+    sound: "/d/",
+    model: "We moved to a new neighbourhood.",
+    tip: "Keep your voice on for the final /d/ sound.",
+    kk: "Соңғы /d/ дыбысын айтқанда дауыс қатысады.",
+  },
+  {
+    word: "started",
+    sound: "/ɪd/",
+    model: "I started a photography course.",
+    tip: "After /t/ or /d/, -ed becomes an extra syllable: start-id.",
+    kk: "/t/ немесе /d/ дыбысынан кейін -ed жеке буын болады: start-id.",
+  },
+];
+
+export function PronunciationLab({ kk }: { kk: boolean }) {
+  const [active, setActive] = useState(0);
+  const [recording, setRecording] = useState(false);
+  const [audioUrl, setAudioUrl] = useState("");
+  const [error, setError] = useState("");
+  const recorder = useRef<MediaRecorder | null>(null);
+  const chunks = useRef<Blob[]>([]);
+  const item = pronunciationItems[active];
+  useEffect(
+    () => () => {
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+    },
+    [audioUrl],
+  );
+  function playModel() {
+    window.speechSynthesis?.cancel();
+    const voice = new SpeechSynthesisUtterance(`${item.word}. ${item.model}`);
+    voice.lang = "en-GB";
+    voice.rate = 0.76;
+    window.speechSynthesis?.speak(voice);
+  }
+  async function record() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      chunks.current = [];
+      const next = new MediaRecorder(stream);
+      next.ondataavailable = (event) => chunks.current.push(event.data);
+      next.onstop = () => {
+        if (audioUrl) URL.revokeObjectURL(audioUrl);
+        setAudioUrl(
+          URL.createObjectURL(
+            new Blob(chunks.current, { type: next.mimeType }),
+          ),
+        );
+        stream.getTracks().forEach((track) => track.stop());
+      };
+      recorder.current = next;
+      setError("");
+      setRecording(true);
+      next.start();
+    } catch {
+      setError("Allow microphone access to record and compare.");
+    }
+  }
+  function stop() {
+    recorder.current?.stop();
+    setRecording(false);
+  }
+  function select(index: number) {
+    setActive(index);
+    setAudioUrl("");
+    setError("");
+    window.speechSynthesis?.cancel();
+  }
+  return (
+    <section className="pronunciation-lab">
+      <div className="pronunciation-head">
+        <div>
+          <span>PRONUNCIATION LAB</span>
+          <h2>
+            Three sounds of past <em>-ed</em>
+          </h2>
+        </div>
+        <small>Listen → record → compare</small>
+      </div>
+      <div className="sound-tabs">
+        {pronunciationItems.map((entry, index) => (
+          <button
+            className={active === index ? "active" : ""}
+            onClick={() => select(index)}
+            key={entry.word}
+          >
+            <b>{entry.word}</b>
+            <span>{entry.sound}</span>
+          </button>
+        ))}
+      </div>
+      <div className="sound-focus">
+        <div className="sound-word">
+          <span>{item.word.slice(0, -2)}</span>
+          <b>ed</b>
+          <em>{item.sound}</em>
+        </div>
+        <div className="model-line">
+          <span>MODEL SENTENCE</span>
+          <p>{item.model}</p>
+          <button onClick={playModel}>
+            <Volume2 /> Hear model
+          </button>
+        </div>
+      </div>
+      <div className="pronunciation-tip">
+        <b>{kk ? "Айтылым кеңесі" : "Pronunciation tip"}</b>
+        <span>{kk ? item.kk : item.tip}</span>
+      </div>
+      <div className="compare-controls">
+        <div>
+          <span>1</span>
+          <button onClick={playModel}>
+            <Headphones /> Listen
+          </button>
+        </div>
+        <i></i>
+        <div>
+          <span>2</span>
+          <button
+            className={recording ? "recording" : ""}
+            onClick={recording ? stop : record}
+          >
+            {recording ? (
+              <>
+                <Square /> Stop
+              </>
+            ) : (
+              <>
+                <Mic2 /> Record
+              </>
+            )}
+          </button>
+        </div>
+        <i></i>
+        <div>
+          <span>3</span>
+          {audioUrl ? (
+            <audio controls src={audioUrl} />
+          ) : (
+            <button disabled>
+              <Play /> Compare
+            </button>
+          )}
+        </div>
+      </div>
+      {error && <p className="record-error">{error}</p>}
+    </section>
+  );
+}
+
 export function ListeningPlayer({ transcript }: { transcript: string }) {
   const [playing, setPlaying] = useState(false);
   const [rate, setRate] = useState(0.9);

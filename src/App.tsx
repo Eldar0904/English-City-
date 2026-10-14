@@ -30,6 +30,7 @@ import {
 } from "./course";
 import {
   ListeningPlayer,
+  PronunciationLab,
   QuestionSet,
   SentenceBuilder,
   SpeakingRecorder,
@@ -335,6 +336,7 @@ function Lesson({
           <b>background action</b>
           <em>I was waiting for a bus.</em>
         </div>
+        <PronunciationLab kk={kk} />
         <QuestionSet
           title="GRAMMAR PRACTICE"
           questions={grammarQuestions}

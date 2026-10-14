@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 import {
+  PronunciationLab,
   SentenceBuilder,
   VisualListening,
   VisualVocabulary,
@@ -45,5 +46,14 @@ describe("immersive activities", () => {
     expect(
       screen.getByText(/Correct — make a mental picture/),
     ).toBeInTheDocument();
+  });
+
+  it("switches between localized pronunciation explanations", () => {
+    render(<PronunciationLab kk={true} />);
+    fireEvent.click(screen.getByRole("button", { name: /moved/i }));
+    expect(
+      screen.getByText("We moved to a new neighbourhood."),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/дауыс қатысады/)).toBeInTheDocument();
   });
 });
