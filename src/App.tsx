@@ -31,7 +31,9 @@ import {
 import {
   ListeningPlayer,
   QuestionSet,
+  SentenceBuilder,
   SpeakingRecorder,
+  VisualListening,
   WordPractice,
 } from "./components/Activities";
 import AuthPage from "./AuthPage";
@@ -291,6 +293,8 @@ function Lesson({
             </b>
           </div>
         </div>
+        <VisualListening kk={kk} />
+        <SentenceBuilder kk={kk} />
         <Prompt
           question="Think of one thing you started recently. What made you begin?"
           hint={

@@ -11,6 +11,207 @@ import {
   Volume2,
 } from "lucide-react";
 import type { Question } from "../course";
+import danaScenes from "../assets/dana-listening-grid.webp";
+
+const visualScenes = [
+  { label: "Dana reads a poster while waiting for a bus.", position: "0% 0%" },
+  { label: "Dana reads a leaflet inside the bus.", position: "100% 0%" },
+  { label: "Dana puts a poster on a noticeboard.", position: "0% 100%" },
+  { label: "Dana photographs a bus at the bus stop.", position: "100% 100%" },
+];
+
+export function VisualListening({ kk }: { kk: boolean }) {
+  const [answer, setAnswer] = useState<number | null>(null);
+  const sentence =
+    "While Dana was waiting for a bus, she noticed a poster for a photography walk.";
+  function listen(rate = 0.88) {
+    window.speechSynthesis?.cancel();
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    utterance.lang = "en-GB";
+    utterance.rate = rate;
+    window.speechSynthesis?.speak(utterance);
+  }
+  return (
+    <section className="visual-listening">
+      <div className="visual-title">
+        <div>
+          <span>LISTEN & LOOK</span>
+          <h2>Which scene matches?</h2>
+          <p>
+            {kk
+              ? "Сөйлемді тыңдап, сәйкес суретті таңдаңыз."
+              : "Listen carefully and choose the matching scene."}
+          </p>
+        </div>
+        <button onClick={() => listen()}>
+          <Headphones /> Play sentence
+        </button>
+      </div>
+      <div className="scene-grid">
+        {visualScenes.map((scene, index) => (
+          <button
+            key={scene.label}
+            aria-label={scene.label}
+            onClick={() => setAnswer(index)}
+            className={
+              answer === null
+                ? ""
+                : index === 0
+                  ? "correct"
+                  : answer === index
+                    ? "wrong"
+                    : "muted"
+            }
+          >
+            <i
+              style={{
+                backgroundImage: `url(${danaScenes})`,
+                backgroundPosition: scene.position,
+              }}
+            />
+            <b>{String.fromCharCode(65 + index)}</b>
+            {answer !== null && index === 0 && (
+              <span>
+                <Check /> Correct
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+      {answer !== null && (
+        <div className={answer === 0 ? "visual-result good" : "visual-result"}>
+          <div>
+            <b>
+              {answer === 0
+                ? "Exactly — she was at the bus stop."
+                : "Not quite. Focus on where Dana was and what she noticed."}
+            </b>
+            <p>
+              {answer === 0
+                ? sentence
+                : kk
+                  ? "Сөйлемді тағы бір рет тыңдап көріңіз."
+                  : "Listen once more, then choose again."}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              if (answer === 0) listen(0.72);
+              else {
+                setAnswer(null);
+                listen();
+              }
+            }}
+          >
+            {answer === 0 ? (
+              <>
+                <Volume2 /> Shadow slowly
+              </>
+            ) : (
+              <>
+                <RotateCcw /> Try again
+              </>
+            )}
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
+
+const sentenceChunks = [
+  "While Dana was waiting",
+  "for a bus,",
+  "she noticed a poster",
+  "for a photography walk.",
+];
+const shuffledChunks = [
+  sentenceChunks[2],
+  sentenceChunks[0],
+  sentenceChunks[3],
+  sentenceChunks[1],
+];
+
+export function SentenceBuilder({ kk }: { kk: boolean }) {
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [checked, setChecked] = useState(false);
+  const remaining = shuffledChunks.filter((chunk) => !chosen.includes(chunk));
+  const correct = chosen.join(" ") === sentenceChunks.join(" ");
+  function reset() {
+    setChosen([]);
+    setChecked(false);
+  }
+  return (
+    <section className="sentence-builder">
+      <div className="builder-heading">
+        <span>BUILD THE SENTENCE</span>
+        <h3>Put the chunks in the order you heard.</h3>
+        <p>
+          {kk
+            ? "Сөйлем бөліктерін дұрыс ретпен орналастырыңыз."
+            : "Think in phrases, not individual words."}
+        </p>
+      </div>
+      <div
+        className={
+          checked
+            ? correct
+              ? "build-line correct"
+              : "build-line wrong"
+            : "build-line"
+        }
+      >
+        {chosen.length ? (
+          chosen.map((chunk, index) => (
+            <button
+              key={chunk}
+              onClick={() => {
+                setChosen((value) => value.filter((_, i) => i !== index));
+                setChecked(false);
+              }}
+            >
+              {chunk}
+              <small>{index + 1}</small>
+            </button>
+          ))
+        ) : (
+          <span>Select the first chunk below…</span>
+        )}
+      </div>
+      <div className="chunk-bank">
+        {remaining.map((chunk) => (
+          <button
+            key={chunk}
+            onClick={() => {
+              setChosen((value) => [...value, chunk]);
+              setChecked(false);
+            }}
+          >
+            {chunk}
+          </button>
+        ))}
+      </div>
+      <div className="builder-actions">
+        <button onClick={reset}>
+          <RotateCcw /> Reset
+        </button>
+        <button
+          disabled={chosen.length !== sentenceChunks.length}
+          onClick={() => setChecked(true)}
+        >
+          Check sentence <Check />
+        </button>
+      </div>
+      {checked && (
+        <div className={correct ? "builder-feedback good" : "builder-feedback"}>
+          {correct
+            ? "Perfect. Now say the complete sentence aloud with natural rhythm."
+            : "Almost. Start with the background action: “While Dana was waiting…”"}
+        </div>
+      )}
+    </section>
+  );
+}
 
 export function QuestionSet({
   title,
