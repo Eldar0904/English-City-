@@ -30,13 +30,15 @@ import {
 import {
   PronunciationLab,
   QuestionSet,
-  SentenceBuilder,
   SpeakingRecorder,
-  VisualListening,
   VisualVocabulary,
   WordPractice,
 } from "./components/Activities";
 import YouTubeLab from "./components/YouTubeLab";
+import {
+  YouTubeMicroLesson,
+  YouTubeSpeakingModel,
+} from "./components/VideoActivities";
 import AuthPage from "./AuthPage";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import {
@@ -294,8 +296,7 @@ function Lesson({
             </b>
           </div>
         </div>
-        <VisualListening kk={kk} />
-        <SentenceBuilder kk={kk} />
+        <YouTubeMicroLesson kk={kk} />
         <Prompt
           question="Think of one thing you started recently. What made you begin?"
           hint={
@@ -418,6 +419,7 @@ function Lesson({
             </span>
           </div>
         </div>
+        <YouTubeSpeakingModel kk={kk} />
         <SpeakingRecorder onReady={() => undefined} />
         <Complete done={done} onClick={onComplete} />
       </>

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   PronunciationLab,
   SentenceBuilder,
@@ -7,6 +7,10 @@ import {
   VisualVocabulary,
 } from "./Activities";
 import { vocabulary } from "../course";
+
+vi.mock("react-youtube", () => ({
+  default: ({ videoId }: { videoId: string }) => <div>{videoId}</div>,
+}));
 
 describe("immersive activities", () => {
   it("gives feedback for the localized visual listening choice", () => {
@@ -50,9 +54,9 @@ describe("immersive activities", () => {
 
   it("switches between localized pronunciation explanations", () => {
     render(<PronunciationLab kk={true} />);
-    fireEvent.click(screen.getByRole("button", { name: /moved/i }));
+    fireEvent.click(screen.getByRole("button", { name: /learned/i }));
     expect(
-      screen.getByText("We moved to a new neighbourhood."),
+      screen.getByText(/small, sustainable changes/),
     ).toBeInTheDocument();
     expect(screen.getByText(/дауыс қатысады/)).toBeInTheDocument();
   });

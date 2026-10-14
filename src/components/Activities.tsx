@@ -2,17 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import {
   Check,
   ChevronRight,
-  Headphones,
   Mic2,
-  Pause,
   Play,
   RotateCcw,
   Square,
-  Volume2,
 } from "lucide-react";
 import type { Question } from "../course";
 import danaScenes from "../assets/dana-listening-grid.webp";
 import vocabularyScenes from "../assets/vocabulary-scenes.webp";
+import YouTubeClip from "./YouTubeClip";
 
 const visualScenes = [
   { label: "Dana reads a poster while waiting for a bus.", position: "0% 0%" },
@@ -25,28 +23,19 @@ export function VisualListening({ kk }: { kk: boolean }) {
   const [answer, setAnswer] = useState<number | null>(null);
   const sentence =
     "While Dana was waiting for a bus, she noticed a poster for a photography walk.";
-  function listen(rate = 0.88) {
-    window.speechSynthesis?.cancel();
-    const utterance = new SpeechSynthesisUtterance(sentence);
-    utterance.lang = "en-GB";
-    utterance.rate = rate;
-    window.speechSynthesis?.speak(utterance);
-  }
   return (
     <section className="visual-listening">
       <div className="visual-title">
         <div>
-          <span>LISTEN & LOOK</span>
+          <span>READ &amp; LOOK</span>
           <h2>Which scene matches?</h2>
           <p>
             {kk
-              ? "Сөйлемді тыңдап, сәйкес суретті таңдаңыз."
-              : "Listen carefully and choose the matching scene."}
+              ? "Сөйлемді оқып, сәйкес суретті таңдаңыз."
+              : "Read carefully and choose the matching scene."}
           </p>
         </div>
-        <button onClick={() => listen()}>
-          <Headphones /> Play sentence
-        </button>
+        <p>{sentence}</p>
       </div>
       <div className="scene-grid">
         {visualScenes.map((scene, index) => (
@@ -91,28 +80,14 @@ export function VisualListening({ kk }: { kk: boolean }) {
               {answer === 0
                 ? sentence
                 : kk
-                  ? "Сөйлемді тағы бір рет тыңдап көріңіз."
-                  : "Listen once more, then choose again."}
+                  ? "Сөйлемді тағы бір рет оқып көріңіз."
+                  : "Read once more, then choose again."}
             </p>
           </div>
           <button
-            onClick={() => {
-              if (answer === 0) listen(0.72);
-              else {
-                setAnswer(null);
-                listen();
-              }
-            }}
+            onClick={() => setAnswer(null)}
           >
-            {answer === 0 ? (
-              <>
-                <Volume2 /> Shadow slowly
-              </>
-            ) : (
-              <>
-                <RotateCcw /> Try again
-              </>
-            )}
+            <RotateCcw /> Try again
           </button>
         </div>
       )}
@@ -521,23 +496,29 @@ export function VisualVocabulary({
 
 const pronunciationItems = [
   {
-    word: "worked",
+    word: "noticed",
     sound: "/t/",
-    model: "I worked in Astana last year.",
+    model: "I also noticed that as I started to do more and harder challenges, my self-confidence grew.",
+    start: 63,
+    end: 86,
     tip: "The final sound is short and unvoiced. Do not add another syllable.",
     kk: "Соңғы дыбыс қысқа, дауыссыз айтылады. Қосымша буын қоспаңыз.",
   },
   {
-    word: "moved",
+    word: "learned",
     sound: "/d/",
-    model: "We moved to a new neighbourhood.",
+    model: "I learned that when I made small, sustainable changes, they were more likely to stick.",
+    start: 153,
+    end: 174,
     tip: "Keep your voice on for the final /d/ sound.",
     kk: "Соңғы /d/ дыбысын айтқанда дауыс қатысады.",
   },
   {
     word: "started",
     sound: "/ɪd/",
-    model: "I started a photography course.",
+    model: "As I started to do more and harder challenges, my self-confidence grew.",
+    start: 63,
+    end: 86,
     tip: "After /t/ or /d/, -ed becomes an extra syllable: start-id.",
     kk: "/t/ немесе /d/ дыбысынан кейін -ed жеке буын болады: start-id.",
   },
@@ -557,13 +538,6 @@ export function PronunciationLab({ kk }: { kk: boolean }) {
     },
     [audioUrl],
   );
-  function playModel() {
-    window.speechSynthesis?.cancel();
-    const voice = new SpeechSynthesisUtterance(`${item.word}. ${item.model}`);
-    voice.lang = "en-GB";
-    voice.rate = 0.76;
-    window.speechSynthesis?.speak(voice);
-  }
   async function record() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -595,7 +569,6 @@ export function PronunciationLab({ kk }: { kk: boolean }) {
     setActive(index);
     setAudioUrl("");
     setError("");
-    window.speechSynthesis?.cancel();
   }
   return (
     <section className="pronunciation-lab">
@@ -629,11 +602,9 @@ export function PronunciationLab({ kk }: { kk: boolean }) {
         <div className="model-line">
           <span>MODEL SENTENCE</span>
           <p>{item.model}</p>
-          <button onClick={playModel}>
-            <Volume2 /> Hear model
-          </button>
         </div>
       </div>
+      <YouTubeClip key={item.word} start={item.start} end={item.end} label={`Listen for “${item.word}”`} compact />
       <div className="pronunciation-tip">
         <b>{kk ? "Айтылым кеңесі" : "Pronunciation tip"}</b>
         <span>{kk ? item.kk : item.tip}</span>
@@ -641,9 +612,7 @@ export function PronunciationLab({ kk }: { kk: boolean }) {
       <div className="compare-controls">
         <div>
           <span>1</span>
-          <button onClick={playModel}>
-            <Headphones /> Listen
-          </button>
+          <b>Replay video</b>
         </div>
         <i></i>
         <div>
@@ -677,68 +646,6 @@ export function PronunciationLab({ kk }: { kk: boolean }) {
       </div>
       {error && <p className="record-error">{error}</p>}
     </section>
-  );
-}
-
-export function ListeningPlayer({ transcript }: { transcript: string }) {
-  const [playing, setPlaying] = useState(false);
-  const [rate, setRate] = useState(0.9);
-  const [showTranscript, setShowTranscript] = useState(false);
-  useEffect(() => () => window.speechSynthesis?.cancel(), []);
-  function play() {
-    if (!window.speechSynthesis) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(transcript);
-    utterance.lang = "en-GB";
-    utterance.rate = rate;
-    utterance.onend = () => setPlaying(false);
-    setPlaying(true);
-    window.speechSynthesis.speak(utterance);
-  }
-  function stop() {
-    window.speechSynthesis?.cancel();
-    setPlaying(false);
-  }
-  return (
-    <div className="listening-player">
-      <div className="listen-main">
-        <button className="listen-play" onClick={playing ? stop : play}>
-          {playing ? <Pause /> : <Play />}
-        </button>
-        <div>
-          <span>LISTENING · 01</span>
-          <h3>My first day in Almaty</h3>
-          <div className="sound-wave">
-            {Array.from({ length: 28 }).map((_, i) => (
-              <i key={i} style={{ height: `${8 + ((i * 7) % 22)}px` }} />
-            ))}
-          </div>
-        </div>
-        <Volume2 />
-      </div>
-      <div className="listen-tools">
-        <label>
-          Speed
-          <select
-            value={rate}
-            onChange={(event) => setRate(Number(event.target.value))}
-          >
-            <option value="0.75">0.75×</option>
-            <option value="0.9">0.9×</option>
-            <option value="1">1×</option>
-          </select>
-        </label>
-        <button onClick={() => setShowTranscript(!showTranscript)}>
-          {showTranscript ? "Hide transcript" : "Show transcript"}
-        </button>
-      </div>
-      {showTranscript && (
-        <div className="transcript">
-          <span>TRANSCRIPT</span>
-          <p>{transcript}</p>
-        </div>
-      )}
-    </div>
   );
 }
 
