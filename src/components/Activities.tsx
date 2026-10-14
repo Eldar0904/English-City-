@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import type { Question } from "../course";
 import danaScenes from "../assets/dana-listening-grid.webp";
+import vocabularyScenes from "../assets/vocabulary-scenes.webp";
 
 const visualScenes = [
   { label: "Dana reads a poster while waiting for a bus.", position: "0% 0%" },
@@ -360,6 +361,161 @@ export function WordPractice({
         </p>
       )}
     </>
+  );
+}
+
+const vocabPositions = [
+  "0% 0%",
+  "50% 0%",
+  "100% 0%",
+  "0% 100%",
+  "50% 100%",
+  "100% 100%",
+];
+
+export function VisualVocabulary({
+  words,
+  kk,
+}: {
+  words: string[][];
+  kk: boolean;
+}) {
+  const [stage, setStage] = useState<"recognise" | "recall" | "finished">(
+    "recognise",
+  );
+  const [round, setRound] = useState(0);
+  const [answer, setAnswer] = useState<number | null>(null);
+  const correct = answer === round;
+  function next() {
+    setAnswer(null);
+    if (round < words.length - 1) setRound((value) => value + 1);
+    else if (stage === "recognise") {
+      setStage("recall");
+      setRound(0);
+    } else setStage("finished");
+  }
+  if (stage === "finished")
+    return (
+      <div className="vocab-finished">
+        <Check />
+        <div>
+          <b>Two retrieval rounds complete</b>
+          <span>
+            {kk
+              ? "Енді тіркестерді өз сөйлемдеріңізде қолданыңыз."
+              : "Now use two of the phrases in your own sentences."}
+          </span>
+        </div>
+        <button
+          onClick={() => {
+            setStage("recognise");
+            setRound(0);
+          }}
+        >
+          Practise again
+        </button>
+      </div>
+    );
+  return (
+    <section className="visual-vocab">
+      <div className="vocab-stage">
+        <span>
+          {stage === "recognise" ? "ROUND 1 · MEANING" : "ROUND 2 · RECALL"}
+        </span>
+        <b>
+          {round + 1} / {words.length}
+        </b>
+      </div>
+      {stage === "recognise" ? (
+        <>
+          <h3>
+            Which image best shows <em>“{words[round][0]}”</em>?
+          </h3>
+          <div className="vocab-scene-grid">
+            {words.map(([phrase], index) => (
+              <button
+                key={phrase}
+                aria-label={`Scene ${index + 1}`}
+                onClick={() => answer === null && setAnswer(index)}
+                className={
+                  answer === null
+                    ? ""
+                    : index === round
+                      ? "correct"
+                      : index === answer
+                        ? "wrong"
+                        : "muted"
+                }
+              >
+                <i
+                  style={{
+                    backgroundImage: `url(${vocabularyScenes})`,
+                    backgroundPosition: vocabPositions[index],
+                  }}
+                />
+                <b>{String.fromCharCode(65 + index)}</b>
+              </button>
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="recall-scene">
+            <i
+              style={{
+                backgroundImage: `url(${vocabularyScenes})`,
+                backgroundPosition: vocabPositions[round],
+              }}
+            />
+            <div>
+              <span>KAZAKH CUE</span>
+              <h3>{words[round][1]}</h3>
+              <p>Choose the English phrase.</p>
+            </div>
+          </div>
+          <div className="recall-options">
+            {words.map(([phrase], index) => (
+              <button
+                key={phrase}
+                onClick={() => answer === null && setAnswer(index)}
+                className={
+                  answer === null
+                    ? ""
+                    : index === round
+                      ? "correct"
+                      : index === answer
+                        ? "wrong"
+                        : "muted"
+                }
+              >
+                {phrase}
+                {answer !== null && index === round && <Check />}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      {answer !== null && (
+        <div className={correct ? "vocab-feedback good" : "vocab-feedback"}>
+          <div>
+            <b>
+              {correct
+                ? "Correct — make a mental picture of the phrase."
+                : "Not this time. Compare the action in each image."}
+            </b>
+            {correct && (
+              <span>
+                {words[round][0]} · {words[round][1]}
+              </span>
+            )}
+          </div>
+          <button onClick={correct ? next : () => setAnswer(null)}>
+            {correct ? "Next" : "Try again"}
+            <ChevronRight />
+          </button>
+        </div>
+      )}
+    </section>
   );
 }
 

@@ -34,6 +34,7 @@ import {
   SentenceBuilder,
   SpeakingRecorder,
   VisualListening,
+  VisualVocabulary,
   WordPractice,
 } from "./components/Activities";
 import AuthPage from "./AuthPage";
@@ -314,6 +315,7 @@ function Lesson({
           text="Match each useful phrase with its Kazakh meaning, then use two phrases in a sentence."
         />
         <WordPractice words={vocabulary} kk={kk} />
+        <VisualVocabulary words={vocabulary} kk={kk} />
         <Prompt
           question="I moved to a new neighbourhood, so I had to…"
           hint="Use: settle in / get to know"
