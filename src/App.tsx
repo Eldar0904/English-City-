@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
 import {
   BookOpen,
   Check,
@@ -16,8 +17,19 @@ import {
   Sparkles,
   UsersRound,
   X,
+  LogOut,
 } from "lucide-react";
 import { lessons, vocabulary } from "./course";
+import AuthPage from "./AuthPage";
+import { isSupabaseConfigured, supabase } from "./lib/supabase";
+import {
+  completeLesson,
+  getCompletedLessons,
+  getProfile,
+  getTeacherDashboard,
+  submitWork,
+  type Profile,
+} from "./lib/platform";
 
 type Role = "student" | "teacher";
 const saved = () => {
@@ -34,14 +46,63 @@ function App() {
   const [done, setDone] = useState<string[]>(saved);
   const [kk, setKk] = useState(true);
   const [nav, setNav] = useState(false);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [authReady, setAuthReady] = useState(!isSupabaseConfigured);
+  const [syncMessage, setSyncMessage] = useState("");
+
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthReady(true);
+    });
+    const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+      setSession(next);
+      if (!next) setProfile(null);
+      setAuthReady(true);
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!session) return;
+    Promise.all([getProfile(session), getCompletedLessons(session.user.id)])
+      .then(([nextProfile, completed]) => {
+        setProfile(nextProfile);
+        setDone(completed);
+        if (nextProfile.role !== "student") setRole("teacher");
+      })
+      .catch((error: Error) => setSyncMessage(error.message));
+  }, [session]);
   useEffect(
     () => localStorage.setItem("ec-progress", JSON.stringify(done)),
     [done],
   );
-  const complete = (id: string) =>
+  const complete = (id: string) => {
     setDone((d) => (d.includes(id) ? d : [...d, id]));
+    if (session)
+      completeLesson(session.user.id, id).catch((error: Error) =>
+        setSyncMessage(error.message),
+      );
+  };
+  const submit = (
+    lessonId: string,
+    kind: "writing" | "speaking",
+    text?: string,
+  ) => {
+    if (!session) return;
+    submitWork(session.user.id, { lessonId, kind, text })
+      .then(() => setSyncMessage("Submitted to your teacher."))
+      .catch((error: Error) => setSyncMessage(error.message));
+  };
+  if (!authReady)
+    return <div className="app-loading">Loading English City…</div>;
+  if (isSupabaseConfigured && !session) return <AuthPage />;
   if (role === "teacher")
-    return <Teacher onSwitch={() => setRole("student")} />;
+    return (
+      <Teacher live={Boolean(session)} onSwitch={() => setRole("student")} />
+    );
   const lesson = lessons.find((l) => l.id === active)!;
   return (
     <div className="app-shell">
@@ -82,7 +143,8 @@ function App() {
           <div>
             <span className="avatar">AS</span>
             <span>
-              Aruzhan S.<small>Student · B1</small>
+              {profile?.full_name || "Aruzhan S."}
+              <small>{profile?.role || "Student"} · B1</small>
             </span>
           </div>
           <button className="icon">
@@ -102,16 +164,46 @@ function App() {
             <button className="language" onClick={() => setKk(!kk)}>
               {kk ? "ҚАЗ" : "EN"}
             </button>
-            <button className="teacher-link" onClick={() => setRole("teacher")}>
-              <LayoutDashboard /> Teacher view
-            </button>
-            <CircleUserRound />
+            {(!session ||
+              profile?.role === "teacher" ||
+              profile?.role === "admin") && (
+              <button
+                className="teacher-link"
+                onClick={() => setRole("teacher")}
+              >
+                <LayoutDashboard /> Teacher view
+              </button>
+            )}
+            {session ? (
+              <button
+                className="icon sign-out"
+                aria-label="Sign out"
+                onClick={() => supabase?.auth.signOut()}
+              >
+                <LogOut />
+              </button>
+            ) : (
+              <CircleUserRound />
+            )}
           </div>
         </header>
         <div className="progress-line">
           <span style={{ width: `${(done.length / lessons.length) * 100}%` }} />
         </div>
         <section className="content">
+          {!isSupabaseConfigured && (
+            <div className="demo-banner">
+              <b>Demo mode</b>
+              <span>
+                Add Supabase settings to enable accounts and cloud sync.
+              </span>
+            </div>
+          )}
+          {syncMessage && (
+            <button className="sync-message" onClick={() => setSyncMessage("")}>
+              {syncMessage} <X />
+            </button>
+          )}
           <div className="eyebrow">
             <span>UNIT 01</span> · {lesson.type} · <Clock3 /> {lesson.minutes}{" "}
             min
@@ -122,6 +214,7 @@ function App() {
             id={active}
             done={done.includes(active)}
             onComplete={() => complete(active)}
+            onSubmit={(kind, text) => submit(active, kind, text)}
             kk={kk}
           />
           <div className="lesson-footer">
@@ -147,13 +240,16 @@ function Lesson({
   id,
   done,
   onComplete,
+  onSubmit,
   kk,
 }: {
   id: string;
   done: boolean;
   onComplete: () => void;
+  onSubmit: (kind: "writing" | "speaking", text?: string) => void;
   kk: boolean;
 }) {
+  const [draft, setDraft] = useState("");
   if (id === "start")
     return (
       <>
@@ -371,6 +467,8 @@ function Lesson({
           question="Your story"
           hint="At first… / While I was… / Suddenly… / In the end…"
           large
+          value={draft}
+          onChange={setDraft}
         />
         <div className="checklist">
           <b>Before you submit</b>
@@ -386,7 +484,10 @@ function Lesson({
         </div>
         <Complete
           done={done}
-          onClick={onComplete}
+          onClick={() => {
+            onSubmit("writing", draft);
+            onComplete();
+          }}
           label="Submit for feedback"
         />
       </>
@@ -428,16 +529,31 @@ function Prompt({
   question,
   hint,
   large = false,
+  value,
+  onChange,
 }: {
   question: string;
   hint: string;
   large?: boolean;
+  value?: string;
+  onChange?: (value: string) => void;
 }) {
   return (
     <div className="prompt">
       <label>{question}</label>
-      <textarea rows={large ? 7 : 3} placeholder={hint} />
-      <small>Your work is saved on this device.</small>
+      <textarea
+        rows={large ? 7 : 3}
+        placeholder={hint}
+        value={value}
+        onChange={
+          onChange ? (event) => onChange(event.target.value) : undefined
+        }
+      />
+      <small>
+        {onChange
+          ? "Your draft is ready to submit."
+          : "Your work is saved on this device."}
+      </small>
     </div>
   );
 }
@@ -520,9 +636,9 @@ function Quiz({
   );
 }
 
-function Teacher({ onSwitch }: { onSwitch: () => void }) {
+function Teacher({ onSwitch, live }: { onSwitch: () => void; live: boolean }) {
   const [tab, setTab] = useState("Overview");
-  const students = useMemo(
+  const demoStudents = useMemo(
     () => [
       { n: "Aruzhan S.", p: 63, last: "Writing draft", status: "On track" },
       { n: "Dias K.", p: 88, last: "Speaking task", status: "Excellent" },
@@ -531,6 +647,36 @@ function Teacher({ onSwitch }: { onSwitch: () => void }) {
     ],
     [],
   );
+  const [students, setStudents] = useState(demoStudents);
+  const [submissionNames, setSubmissionNames] = useState([
+    "Aruzhan · An unforgettable day",
+    "Dias · My 60-second story",
+    "Madina · An unforgettable day",
+  ]);
+  useEffect(() => {
+    if (!live) return;
+    getTeacherDashboard()
+      .then(({ students: rows, submissions }) => {
+        setStudents(
+          rows.map((row: Record<string, unknown>) => {
+            const completed = Number(row.completed_lessons ?? 0);
+            return {
+              n: String(row.full_name || "Student"),
+              p: Math.round((completed / lessons.length) * 100),
+              last: completed ? `${completed} lessons complete` : "Not started",
+              status: completed < 3 ? "Needs support" : "On track",
+            };
+          }),
+        );
+        setSubmissionNames(
+          submissions.map((row: Record<string, unknown>) => {
+            const profile = row.profiles as { full_name?: string } | null;
+            return `${profile?.full_name || "Student"} · ${row.kind === "speaking" ? "Speaking task" : "Writing task"}`;
+          }),
+        );
+      })
+      .catch(() => undefined);
+  }, [live]);
   return (
     <div className="teacher">
       <aside>
@@ -558,7 +704,7 @@ function Teacher({ onSwitch }: { onSwitch: () => void }) {
                   ][i]
                 }
                 {x}
-                {x === "Submissions" && <em>6</em>}
+                {x === "Submissions" && <em>{submissionNames.length}</em>}
               </button>
             ),
           )}
@@ -585,7 +731,7 @@ function Teacher({ onSwitch }: { onSwitch: () => void }) {
               <p>Unit 1 · New beginnings</p>
             </div>
             <div>
-              <b>4</b>
+              <b>{students.length}</b>
               <small>Students</small>
             </div>
             <div>
@@ -601,7 +747,7 @@ function Teacher({ onSwitch }: { onSwitch: () => void }) {
               <span>
                 <UsersRound />
               </span>
-              <b>4</b>
+              <b>{students.length}</b>
               <small>Active students</small>
               <em>+1 this week</em>
             </div>
@@ -609,7 +755,7 @@ function Teacher({ onSwitch }: { onSwitch: () => void }) {
               <span>
                 <PenLine />
               </span>
-              <b>6</b>
+              <b>{submissionNames.length}</b>
               <small>Awaiting feedback</small>
               <em>3 writing · 3 speaking</em>
             </div>
@@ -681,11 +827,7 @@ function Teacher({ onSwitch }: { onSwitch: () => void }) {
                   <h2>Recent submissions</h2>
                 </div>
               </div>
-              {[
-                "Aruzhan · An unforgettable day",
-                "Dias · My 60-second story",
-                "Madina · An unforgettable day",
-              ].map((x, i) => (
+              {submissionNames.map((x, i) => (
                 <div className="submission" key={x}>
                   <i>{i === 1 ? <Mic2 /> : <PenLine />}</i>
                   <span>

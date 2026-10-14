@@ -7,5 +7,6 @@ describe('English City', () => {
     render(<App />)
     expect(screen.getByRole('heading', { name: 'Start here' })).toBeInTheDocument()
     expect(screen.getByText('When did you last try something new?')).toBeInTheDocument()
+    expect(screen.getByText('Demo mode')).toBeInTheDocument()
   })
 })
