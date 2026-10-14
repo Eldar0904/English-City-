@@ -19,7 +19,21 @@ import {
   X,
   LogOut,
 } from "lucide-react";
-import { lessons, vocabulary } from "./course";
+import {
+  grammarQuestions,
+  lessons,
+  listeningQuestions,
+  listeningTranscript,
+  readingQuestions,
+  reviewQuestions,
+  vocabulary,
+} from "./course";
+import {
+  ListeningPlayer,
+  QuestionSet,
+  SpeakingRecorder,
+  WordPractice,
+} from "./components/Activities";
 import AuthPage from "./AuthPage";
 import { isSupabaseConfigured, supabase } from "./lib/supabase";
 import {
@@ -191,14 +205,6 @@ function App() {
           <span style={{ width: `${(done.length / lessons.length) * 100}%` }} />
         </div>
         <section className="content">
-          {!isSupabaseConfigured && (
-            <div className="demo-banner">
-              <b>Demo mode</b>
-              <span>
-                Add Supabase settings to enable accounts and cloud sync.
-              </span>
-            </div>
-          )}
           {syncMessage && (
             <button className="sync-message" onClick={() => setSyncMessage("")}>
               {syncMessage} <X />
@@ -303,15 +309,7 @@ function Lesson({
           title="Build your word power"
           text="Match each useful phrase with its Kazakh meaning, then use two phrases in a sentence."
         />
-        <div className="word-grid">
-          {vocabulary.map(([en, kz], i) => (
-            <div className="word-card" key={en}>
-              <span>0{i + 1}</span>
-              <b>{en}</b>
-              <small>{kk ? kz : "Tap to practise"}</small>
-            </div>
-          ))}
-        </div>
+        <WordPractice words={vocabulary} kk={kk} />
         <Prompt
           question="I moved to a new neighbourhood, so I had to…"
           hint="Use: settle in / get to know"
@@ -321,23 +319,23 @@ function Lesson({
     );
   if (id === "grammar")
     return (
-      <Quiz
-        title="Past simple or past continuous?"
-        question="I ___ home when I ___ an old friend."
-        options={[
-          "walked / was seeing",
-          "was walking / saw",
-          "was walking / was seeing",
-        ]}
-        correct={1}
-        explanation={
-          kk
-            ? "Ұзақ әрекет: past continuous; оны бөлген оқиға: past simple."
-            : "Use past continuous for the background action and past simple for the event."
-        }
-        done={done}
-        onComplete={onComplete}
-      />
+      <>
+        <div className="grammar-guide">
+          <span>PAST SIMPLE</span>
+          <b>completed event</b>
+          <em>I saw a poster.</em>
+          <i>+</i>
+          <span>PAST CONTINUOUS</span>
+          <b>background action</b>
+          <em>I was waiting for a bus.</em>
+        </div>
+        <QuestionSet
+          title="GRAMMAR PRACTICE"
+          questions={grammarQuestions}
+          kk={kk}
+          onComplete={onComplete}
+        />
+      </>
     );
   if (id === "read")
     return (
@@ -362,21 +360,10 @@ function Lesson({
             point.
           </p>
         </article>
-        <Quiz
-          title="Check your understanding"
-          question="Why was the photography walk important?"
-          options={[
-            "Dana found a new job immediately.",
-            "It helped Dana discover a meaningful new interest.",
-            "She decided to leave Astana.",
-          ]}
-          correct={1}
-          explanation={
-            kk
-              ? "Серуен Данаға жаңа қызығушылық пен адамдарды табуға көмектесті."
-              : "The walk introduced a creative interest that became part of her life."
-          }
-          done={done}
+        <QuestionSet
+          title="READING CHECK"
+          questions={readingQuestions}
+          kk={kk}
           onComplete={onComplete}
         />
       </>
@@ -388,33 +375,11 @@ function Lesson({
           title="A voice from Almaty"
           text="Listen for the main idea, then for details."
         />
-        <div className="audio-card">
-          <button aria-label="Play audio">
-            <Play />
-          </button>
-          <div>
-            <b>Episode 01 · My first day</b>
-            <span>
-              <i></i>
-            </span>
-          </div>
-          <time>01:24</time>
-        </div>
-        <p className="note">
-          Prototype note: studio audio will be added in the content system. A
-          teacher can also attach their own recording.
-        </p>
-        <Quiz
-          title="Listen for gist"
-          question="How did Timur feel by the end of the day?"
-          options={["More confident", "Still disappointed", "Ready to go home"]}
-          correct={0}
-          explanation={
-            kk
-              ? "Күн соңында Тимур өзін сенімдірек сезінді."
-              : "Timur says the experience felt easier after he met his team."
-          }
-          done={done}
+        <ListeningPlayer transcript={listeningTranscript} />
+        <QuestionSet
+          title="LISTENING CHECK"
+          questions={listeningQuestions}
+          kk={kk}
           onComplete={onComplete}
         />
       </>
@@ -446,13 +411,7 @@ function Lesson({
             </span>
           </div>
         </div>
-        <button className="record">
-          <Mic2 /> Start recording
-        </button>
-        <p className="note">
-          Recording is represented in this MVP; teacher submission needs backend
-          storage.
-        </p>
+        <SpeakingRecorder onReady={() => undefined} />
         <Complete done={done} onClick={onComplete} />
       </>
     );
@@ -500,17 +459,10 @@ function Lesson({
         <h2>You’re building momentum</h2>
         <p>Complete the remaining lessons, then take a short review quiz.</p>
       </div>
-      <Quiz
-        title="Final check"
-        question="Choose the correct sentence."
-        options={[
-          "I met Aida while I was learning photography.",
-          "I was meeting Aida while I learned photography.",
-          "I meet Aida while I was learning photography.",
-        ]}
-        correct={0}
-        explanation="Great work — the short event uses past simple; the longer background action uses past continuous."
-        done={done}
+      <QuestionSet
+        title="UNIT CHECK"
+        questions={reviewQuestions}
+        kk={kk}
         onComplete={onComplete}
       />
     </>
@@ -551,7 +503,7 @@ function Prompt({
       />
       <small>
         {onChange
-          ? "Your draft is ready to submit."
+          ? `${value?.trim() ? value.trim().split(/\s+/).length : 0} words · target 100–120`
           : "Your work is saved on this device."}
       </small>
     </div>
